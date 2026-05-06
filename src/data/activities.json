@@ -1,0 +1,182 @@
+[
+  {
+    "id": 1,
+    "name": "Running",
+    "slug": "running",
+    "met_value": 9.8,
+    "category": "cardio",
+    "duration_label": "30 min",
+    "description": "One of the most effective calorie-burning exercises. Running at a moderate pace (8 km/h) burns significant calories while improving cardiovascular health."
+  },
+  {
+    "id": 2,
+    "name": "Cycling",
+    "slug": "cycling",
+    "met_value": 7.5,
+    "category": "cardio",
+    "duration_label": "45 min",
+    "description": "Cycling is a low-impact cardio exercise suitable for all fitness levels. Great for legs, core, and cardiovascular endurance."
+  },
+  {
+    "id": 3,
+    "name": "Yoga",
+    "slug": "yoga",
+    "met_value": 3.0,
+    "category": "flexibility",
+    "duration_label": "60 min",
+    "description": "Yoga combines physical postures, breathing exercises, and meditation. While moderate in calorie burn, it improves flexibility, balance, and mental well-being."
+  },
+  {
+    "id": 4,
+    "name": "HIIT Workout",
+    "slug": "hiit-workout",
+    "met_value": 8.0,
+    "category": "cardio",
+    "duration_label": "25 min",
+    "description": "High-Intensity Interval Training alternates intense bursts of activity with short rest periods. Highly efficient for calorie burning and metabolic boost."
+  },
+  {
+    "id": 5,
+    "name": "Swimming",
+    "slug": "swimming",
+    "met_value": 8.3,
+    "category": "cardio",
+    "duration_label": "45 min",
+    "description": "Swimming is a full-body workout that is easy on the joints. It builds endurance, strength, and cardiovascular fitness simultaneously."
+  },
+  {
+    "id": 6,
+    "name": "Walking (Brisk)",
+    "slug": "brisk-walking",
+    "met_value": 3.5,
+    "category": "cardio",
+    "duration_label": "60 min",
+    "description": "Brisk walking is an accessible and effective low-impact exercise. Perfect for beginners and great for daily calorie management."
+  },
+  {
+    "id": 7,
+    "name": "Strength Training",
+    "slug": "strength-training",
+    "met_value": 5.0,
+    "category": "strength",
+    "duration_label": "45 min",
+    "description": "Weight training builds muscle mass which increases your resting metabolic rate. Essential for long-term fat loss and body composition changes."
+  },
+  {
+    "id": 8,
+    "name": "Dancing",
+    "slug": "dancing",
+    "met_value": 4.8,
+    "category": "cardio",
+    "duration_label": "45 min",
+    "description": "Dancing is a fun and social way to burn calories. From Bollywood to salsa, dancing improves coordination, mood, and fitness."
+  },
+  {
+    "id": 9,
+    "name": "Basketball",
+    "slug": "basketball",
+    "met_value": 6.5,
+    "category": "sports",
+    "duration_label": "45 min",
+    "description": "Basketball provides an intense cardio workout while building agility, coordination, and teamwork skills."
+  },
+  {
+    "id": 10,
+    "name": "Tennis",
+    "slug": "tennis",
+    "met_value": 7.3,
+    "category": "sports",
+    "duration_label": "60 min",
+    "description": "Tennis is a high-energy sport that combines cardiovascular exercise with explosive movements and coordination."
+  },
+  {
+    "id": 11,
+    "name": "Jump Rope",
+    "slug": "jump-rope",
+    "met_value": 11.0,
+    "category": "cardio",
+    "duration_label": "20 min",
+    "description": "Jump rope is one of the most calorie-efficient exercises per minute. It improves coordination, cardiovascular health, and leg power."
+  },
+  {
+    "id": 12,
+    "name": "Stair Climbing",
+    "slug": "stair-climbing",
+    "met_value": 8.8,
+    "category": "cardio",
+    "duration_label": "30 min",
+    "description": "Stair climbing targets glutes, quads, and calves while providing excellent cardiovascular exercise. No equipment needed."
+  },
+  {
+    "id": 13,
+    "name": "Elliptical Trainer",
+    "slug": "elliptical-trainer",
+    "met_value": 5.0,
+    "category": "cardio",
+    "duration_label": "45 min",
+    "description": "The elliptical provides a smooth, low-impact full-body workout. Ideal for those with joint issues who still want effective cardio."
+  },
+  {
+    "id": 14,
+    "name": "Rowing",
+    "slug": "rowing",
+    "met_value": 7.0,
+    "category": "strength",
+    "duration_label": "30 min",
+    "description": "Rowing engages 86% of the muscles in your body. It combines strength and cardio for an incredibly efficient full-body workout."
+  },
+  {
+    "id": 15,
+    "name": "Pilates",
+    "slug": "pilates",
+    "met_value": 3.0,
+    "category": "flexibility",
+    "duration_label": "60 min",
+    "description": "Pilates focuses on core strength, posture, and controlled movement. While not high in calorie burn, it transforms body composition over time."
+  },
+  {
+    "id": 16,
+    "name": "Zumba",
+    "slug": "zumba",
+    "met_value": 6.0,
+    "category": "cardio",
+    "duration_label": "60 min",
+    "description": "Zumba is a Latin-inspired dance fitness program. It makes cardio fun and is excellent for burning calories while improving rhythm and coordination."
+  },
+  {
+    "id": 17,
+    "name": "Badminton",
+    "slug": "badminton",
+    "met_value": 5.5,
+    "category": "sports",
+    "duration_label": "60 min",
+    "description": "Badminton requires quick reflexes and bursts of speed, making it an excellent full-body workout that improves agility and hand-eye coordination."
+  },
+  {
+    "id": 18,
+    "name": "Cricket",
+    "slug": "cricket",
+    "met_value": 4.8,
+    "category": "sports",
+    "duration_label": "90 min",
+    "description": "Cricket involves running, throwing, and batting. Depending on your role, it can be a moderate to intense physical activity."
+  },
+  {
+    "id": 19,
+    "name": "Football (Soccer)",
+    "slug": "football-soccer",
+    "met_value": 7.0,
+    "category": "sports",
+    "duration_label": "60 min",
+    "description": "Football is a global sport that provides intense cardio, sprinting, and agility training. Excellent for overall fitness and teamwork."
+  },
+  {
+    "id": 20,
+    "name": "Hiking",
+    "slug": "hiking",
+    "met_value": 6.0,
+    "category": "cardio",
+    "duration_label": "60 min",
+    "description": "Hiking combines cardiovascular exercise with exposure to nature. Uphill hiking significantly increases calorie burn and leg strength."
+  }
+]
