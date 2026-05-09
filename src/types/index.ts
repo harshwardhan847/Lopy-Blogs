@@ -63,3 +63,27 @@ export interface Calculator {
   description: string;
   faqs: { question: string; answer: string }[];
 }
+
+export interface Blog {
+  id: number;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string; // markdown
+  cover_image_url: string;
+  cover_image_alt: string;
+  cover_image_credit: string;
+  tags: string[];
+  category: string;
+  meta_title: string;
+  meta_description: string;
+  meta_keywords: string[];
+  status: "draft" | "published";
+  source_type: "news" | "evergreen";
+  source_news_url: string | null;
+  source_news_title: string | null;
+  reading_time_minutes: number;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+}

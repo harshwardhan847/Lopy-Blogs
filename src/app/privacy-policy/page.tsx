@@ -4,7 +4,7 @@ export const metadata: Metadata = {
   title: "Privacy Policy | Oatmeal – Calorie Tracker",
   description:
     "Privacy Policy for the Oatmeal calorie tracker app and website. We respect your privacy and explain how data is handled.",
-  alternates: { canonical: "https://oatmealapp.com/privacy-policy" },
+  alternates: { canonical: "https://blogs.lopy.in/privacy-policy" },
 };
 
 const EFFECTIVE_DATE = "January 1, 2025";

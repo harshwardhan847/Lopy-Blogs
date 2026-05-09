@@ -2,14 +2,16 @@ import type { MetadataRoute } from "next";
 import { getAllFoods } from "@/lib/foods";
 import { getAllActivities } from "@/lib/activities";
 import { getAllMealPlans } from "@/lib/meal-plans";
+import { getAllPublishedBlogs } from "@/lib/blogs";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oatmealapp.com";
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://blogs.lopy.in";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [foods, activities, mealPlans] = await Promise.all([
+  const [foods, activities, mealPlans, blogs] = await Promise.all([
     getAllFoods(),
     getAllActivities(),
     getAllMealPlans(),
+    getAllPublishedBlogs(),
   ]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
@@ -108,5 +110,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...foodRoutes, ...activityRoutes, ...mealPlanRoutes];
+  const blogRoutes: MetadataRoute.Sitemap = blogs.map((b) => ({
+    url: `${BASE_URL}/blog/${b.slug}`,
+    lastModified: b.published_at
+      ? new Date(b.published_at)
+      : new Date(b.created_at),
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
+  }));
+
+  const blogIndex: MetadataRoute.Sitemap = [
+    {
+      url: `${BASE_URL}/blog`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+  ];
+
+  return [
+    ...staticRoutes,
+    ...foodRoutes,
+    ...activityRoutes,
+    ...mealPlanRoutes,
+    ...blogIndex,
+    ...blogRoutes,
+  ];
 }

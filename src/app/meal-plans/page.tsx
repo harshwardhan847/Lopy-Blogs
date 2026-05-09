@@ -8,12 +8,12 @@ export const metadata: Metadata = {
   title: "Indian Meal Plans – Weight Loss, Muscle Gain & More | Oatmeal",
   description:
     "Browse 10+ expertly designed Indian meal plans for weight loss, muscle gain, keto, vegetarian, and more. Free weekly schedules with macros. Track with Oatmeal.",
-  alternates: { canonical: "https://oatmealapp.com/meal-plans" },
+  alternates: { canonical: "https://blogs.lopy.in/meal-plans" },
   openGraph: {
     title: "Indian Meal Plans – Weight Loss, Muscle Gain & More | Oatmeal",
     description:
       "Free Indian meal plans with macro targets and weekly schedules. Download Oatmeal to track automatically.",
-    url: "https://oatmealapp.com/meal-plans",
+    url: "https://blogs.lopy.in/meal-plans",
     siteName: "Oatmeal – Calorie Tracker",
     type: "website",
   },

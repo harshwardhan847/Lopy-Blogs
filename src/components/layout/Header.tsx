@@ -10,6 +10,7 @@ const NAV_LINKS = [
   { href: "/burn", label: "Calorie Burn" },
   { href: "/meal-plans", label: "Meal Plans" },
   { href: "/calculators", label: "Calculators" },
+  { href: "/blog", label: "Blog" },
 ];
 
 export default function Header() {

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   title: "About Oatmeal – Free Calorie Tracker App",
   description:
     "Oatmeal is a free calorie tracker and nutrition database app built to make healthy eating simple, data-driven, and enjoyable.",
-  alternates: { canonical: "https://oatmealapp.com/about" },
+  alternates: { canonical: "https://blogs.lopy.in/about" },
 };
 
 export default function AboutPage() {

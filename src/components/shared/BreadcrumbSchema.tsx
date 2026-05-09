@@ -12,7 +12,7 @@ interface BreadcrumbSchemaProps {
 
 export default function BreadcrumbSchema({
   crumbs,
-  baseUrl = "https://oatmealapp.com",
+  baseUrl = "https://blogs.lopy.in",
 }: BreadcrumbSchemaProps) {
   const schema: BreadcrumbList = {
     "@type": "BreadcrumbList",

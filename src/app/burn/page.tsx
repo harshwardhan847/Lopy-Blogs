@@ -9,12 +9,12 @@ export const metadata: Metadata = {
   title: "Calories Burned Calculator – 20+ Activities | Oatmeal",
   description:
     "Find out how many calories you burn doing any activity. Browse 20+ exercises with calorie burn calculators by weight and duration. Track workouts free with Oatmeal.",
-  alternates: { canonical: "https://oatmealapp.com/burn" },
+  alternates: { canonical: "https://blogs.lopy.in/burn" },
   openGraph: {
     title: "Calories Burned Calculator – 20+ Activities | Oatmeal",
     description:
       "Free calorie burn calculator for running, cycling, yoga, HIIT, and more. Track your workouts with Oatmeal app.",
-    url: "https://oatmealapp.com/burn",
+    url: "https://blogs.lopy.in/burn",
     siteName: "Oatmeal – Calorie Tracker",
     type: "website",
   },

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import type { Food, Activity, MealPlan } from "@/types";
+import type { Food, Activity, MealPlan, Blog } from "@/types";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://oatmealapp.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://blogs.lopy.in";
 const SITE_NAME = "Oatmeal – Calorie Tracker";
 
 export function buildFoodMetadata(food: Food): Metadata {
@@ -110,6 +110,39 @@ export function buildCalculatorMetadata(slug: string): Metadata {
       card: "summary",
       title: meta.title,
       description: meta.description,
+    },
+  };
+}
+
+export function buildBlogMetadata(blog: Blog): Metadata {
+  const title = blog.meta_title || blog.title;
+  const description = blog.meta_description || blog.excerpt;
+  const canonicalUrl = `${SITE_URL}/blog/${blog.slug}`;
+  const imageUrl = blog.cover_image_url || undefined;
+
+  return {
+    title,
+    description,
+    keywords: blog.meta_keywords,
+    alternates: { canonical: canonicalUrl },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: SITE_NAME,
+      type: "article",
+      publishedTime: blog.published_at ?? undefined,
+      modifiedTime: blog.updated_at,
+      tags: blog.tags,
+      images: imageUrl
+        ? [{ url: imageUrl, alt: blog.cover_image_alt || title }]
+        : undefined,
+    },
+    twitter: {
+      card: imageUrl ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: imageUrl ? [imageUrl] : undefined,
     },
   };
 }

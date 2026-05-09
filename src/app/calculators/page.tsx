@@ -13,11 +13,11 @@ export const metadata: Metadata = {
   title: "Free Health Calculators – TDEE, BMR, Macros, BMI | Oatmeal",
   description:
     "Free nutrition and fitness calculators: TDEE, BMR, Macro, and BMI. Get personalized calorie and macro targets instantly.",
-  alternates: { canonical: "https://oatmealapp.com/calculators" },
+  alternates: { canonical: "https://blogs.lopy.in/calculators" },
   openGraph: {
     title: "Free Health Calculators – TDEE, BMR, Macros, BMI | Oatmeal",
     description: "Calculate your TDEE, BMR, macros, and BMI for free.",
-    url: "https://oatmealapp.com/calculators",
+    url: "https://blogs.lopy.in/calculators",
     siteName: "Oatmeal – Calorie Tracker",
     type: "website",
   },

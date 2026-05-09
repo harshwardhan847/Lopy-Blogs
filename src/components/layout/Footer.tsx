@@ -1,6 +1,12 @@
 import Link from "next/link";
 
 const FOOTER_LINKS = {
+  Blog: [
+    { href: "/blog", label: "All Articles" },
+    { href: "/blog", label: "Nutrition Tips" },
+    { href: "/blog", label: "Weight Loss" },
+    { href: "/blog", label: "Fitness Guides" },
+  ],
   "Food Database": [
     { href: "/calories", label: "Browse Foods" },
     { href: "/calories/rice-cooked", label: "Rice Calories" },
