@@ -28,8 +28,8 @@ export default function AdminPage() {
       const res = await fetch("/api/admin/blogs");
       const data = await res.json();
       setBlogs(data);
-    } catch {
-      // silently fail
+    } catch (err) {
+      console.error("Failed to fetch blogs:", err);
     } finally {
       setLoadingBlogs(false);
     }

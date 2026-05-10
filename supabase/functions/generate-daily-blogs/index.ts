@@ -111,13 +111,6 @@ WRITING STYLE:
 - Use subheadings, bullet points, and numbered lists generously
 - Include real numbers and scientific context where relevant
 
-STRUCTURE:
-1. Hook introduction (1–2 paragraphs)
-2. 4–6 H2 sections covering the topic in depth
-3. Practical tips section
-4. Oatmeal CTA paragraph (before conclusion)
-5. Conclusion (3–5 sentences)
-
 INTERNAL LINKS (use natural anchor text):
 - Food database: ${siteUrl}/calories
 - Calorie burn calculator: ${siteUrl}/burn
@@ -125,39 +118,48 @@ INTERNAL LINKS (use natural anchor text):
 - BMI calculator: ${siteUrl}/calculators/bmi
 - Meal plans: ${siteUrl}/meal-plans
 
-OATMEAL CTA (always include before conclusion):
-"If you want to take control of your nutrition, **[Oatmeal – Calorie Tracker](${APP_URL})** makes it effortless. Track every meal, log your workouts, and see your daily macros in real time — all from your phone. **[Download Oatmeal free](${APP_URL})** and start reaching your goals today."
-
 SEO REQUIREMENTS:
 - Target keyword in title, first H2, and first 100 words
-- Target length: 1500–2500 words
+- Target length: 1200-1600 words`;
+}
 
-OUTPUT FORMAT (return ONLY valid JSON — no markdown fences, no extra text):
+function buildMetadataPrompt(siteUrl: string) {
+  return `${buildSystemPrompt(siteUrl)}
+
+Return ONLY valid JSON for the blog metadata. Do not include the article body, markdown fences, or extra text.
+
+OUTPUT FORMAT:
 {
   "title": "Article title",
   "slug": "url-friendly-slug",
-  "excerpt": "150–160 character summary",
-  "content_md": "Full markdown article (1500–2500 words)",
-  "meta_title": "SEO title ≤ 60 chars",
-  "meta_description": "SEO description 150–160 chars",
+  "excerpt": "150-160 character summary",
+  "meta_title": "SEO title <= 60 chars",
+  "meta_description": "SEO description 150-160 chars",
   "meta_keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
   "tags": ["tag1", "tag2", "tag3"],
-  "category": "one of: nutrition | fitness | weight-loss | meal-planning | health | recipes",
-  "reading_time_minutes": 7
+  "category": "one of: nutrition | fitness | weight-loss | meal-planning | health | recipes"
 }`;
 }
 
-async function generateBlogContent(
-  systemPrompt: string,
-  topic: string,
-  newsArticle?: { title: string; url: string },
-) {
+function buildContentPrompt(siteUrl: string) {
+  return `${buildSystemPrompt(siteUrl)}
+
+STRUCTURE:
+1. Hook introduction (1-2 paragraphs)
+2. 4-6 H2 sections covering the topic in depth
+3. Practical tips section
+4. Oatmeal CTA paragraph (before conclusion)
+5. Conclusion (3-5 sentences)
+
+OATMEAL CTA (always include before conclusion):
+"If you want to take control of your nutrition, **[Oatmeal - Calorie Tracker](${APP_URL})** makes it effortless. Track every meal, log your workouts, and see your daily macros in real time - all from your phone. **[Download Oatmeal free](${APP_URL})** and start reaching your goals today."
+
+Return ONLY the markdown article body. Do not wrap it in JSON or markdown fences. Do not include a top-level H1 because the page already renders the title.`;
+}
+
+async function callFalLLM(systemPrompt: string, prompt: string, maxTokens: number) {
   const falKey = Deno.env.get("FAL_KEY");
   if (!falKey) throw new Error("FAL_KEY not set");
-
-  const userPrompt = newsArticle
-    ? `Write a detailed health and fitness blog post inspired by this news: "${newsArticle.title}"\n\nNews URL: ${newsArticle.url}\n\nUse it as a hook to write a full educational piece.`
-    : `Write a detailed health and fitness blog post on the following topic:\n\n"${topic}"\n\nMake it practical, evidence-based, and engaging.`;
 
   const res = await fetch("https://fal.run/fal-ai/any-llm", {
     method: "POST",
@@ -168,9 +170,9 @@ async function generateBlogContent(
     body: JSON.stringify({
       model: "anthropic/claude-sonnet-4-5",
       system_prompt: systemPrompt,
-      prompt: userPrompt,
+      prompt,
       temperature: 0.7,
-      max_tokens: 4096,
+      max_tokens: maxTokens,
     }),
   });
 
@@ -180,18 +182,129 @@ async function generateBlogContent(
   }
 
   const json = await res.json();
-  const raw = (json.output ?? "")
+  return (json.output ?? "").trim();
+}
+
+function stripJsonFence(raw: string) {
+  return raw
     .replace(/^```json\s*/i, "")
     .replace(/^```\s*/i, "")
     .replace(/```\s*$/i, "")
     .trim();
+}
 
-  return JSON.parse(raw);
+function stripMarkdownFence(raw: string) {
+  return raw
+    .replace(/^```markdown\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```\s*$/i, "")
+    .trim();
+}
+
+function estimateReadingTimeMinutes(markdown: string) {
+  const wordCount = markdown.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(wordCount / 220));
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function normalizeMetadata(metadata: Record<string, unknown>, fallbackTopic: string) {
+  const title =
+    typeof metadata.title === "string" && metadata.title.trim()
+      ? metadata.title.trim()
+      : fallbackTopic;
+  const excerpt =
+    typeof metadata.excerpt === "string" && metadata.excerpt.trim()
+      ? metadata.excerpt.trim()
+      : title;
+  const parsedTags = Array.isArray(metadata.tags)
+    ? metadata.tags.filter((tag): tag is string => typeof tag === "string")
+    : [];
+  const tags = parsedTags.length > 0 ? parsedTags : ["health"];
+  const parsedMetaKeywords = Array.isArray(metadata.meta_keywords)
+    ? metadata.meta_keywords.filter(
+        (keyword): keyword is string => typeof keyword === "string",
+      )
+    : [];
+  const metaKeywords = parsedMetaKeywords.length > 0
+    ? parsedMetaKeywords
+    : tags;
+
+  return {
+    title,
+    slug:
+      typeof metadata.slug === "string" && metadata.slug.trim()
+        ? metadata.slug.trim()
+        : slugify(title),
+    excerpt,
+    meta_title:
+      typeof metadata.meta_title === "string" && metadata.meta_title.trim()
+        ? metadata.meta_title.trim()
+        : title.slice(0, 60),
+    meta_description:
+      typeof metadata.meta_description === "string" &&
+      metadata.meta_description.trim()
+        ? metadata.meta_description.trim()
+        : excerpt,
+    meta_keywords: metaKeywords,
+    tags,
+    category:
+      typeof metadata.category === "string" && metadata.category.trim()
+        ? metadata.category.trim()
+        : "health",
+  };
+}
+
+async function generateBlogContent(
+  metadataPrompt: string,
+  contentPrompt: string,
+  topic: string,
+  newsArticle?: { title: string; url: string },
+) {
+  const topicPrompt = newsArticle
+    ? `Write a detailed health and fitness blog post inspired by this news: "${newsArticle.title}"\n\nNews URL: ${newsArticle.url}\n\nUse it as a hook to write a full educational piece.`
+    : `Write a detailed health and fitness blog post on the following topic:\n\n"${topic}"\n\nMake it practical, evidence-based, and engaging.`;
+
+  const metadataRaw = await callFalLLM(metadataPrompt, topicPrompt, 1200);
+  let metadata;
+  try {
+    metadata = normalizeMetadata(JSON.parse(stripJsonFence(metadataRaw)), topic);
+  } catch {
+    throw new Error(
+      `Failed to parse AI metadata JSON output. Raw: ${metadataRaw.slice(0, 500)}`,
+    );
+  }
+
+  const contentRaw = await callFalLLM(
+    contentPrompt,
+    `${topicPrompt}
+
+Use this approved metadata:
+Title: ${metadata.title}
+Slug: ${metadata.slug}
+Excerpt: ${metadata.excerpt}
+Primary keyword: ${metadata.meta_keywords?.[0] ?? metadata.title}
+Category: ${metadata.category}
+Tags: ${(metadata.tags ?? []).join(", ")}`,
+    4096,
+  );
+  const content_md = stripMarkdownFence(contentRaw);
+
+  return {
+    ...metadata,
+    content_md,
+    reading_time_minutes: estimateReadingTimeMinutes(content_md),
+  };
 }
 
 // ── Main handler ──────────────────────────────────────────────────────────
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -220,7 +333,8 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey, {
       auth: { persistSession: false },
     });
-    const systemPrompt = buildSystemPrompt(siteUrl);
+    const metadataPrompt = buildMetadataPrompt(siteUrl);
+    const contentPrompt = buildContentPrompt(siteUrl);
 
     const news = await fetchHealthNews();
     const newsCount = Math.min(Math.floor(count / 2), news.length);
@@ -241,7 +355,8 @@ Deno.serve(async (req) => {
     for (const task of tasks) {
       try {
         const aiOutput = await generateBlogContent(
-          systemPrompt,
+          metadataPrompt,
+          contentPrompt,
           task.topic,
           task.news,
         );

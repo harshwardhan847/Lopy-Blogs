@@ -151,13 +151,6 @@ WRITING STYLE:
 - Include real numbers and scientific context where relevant
 - Never be preachy; be practical and actionable
 
-STRUCTURE:
-1. Hook introduction (1–2 paragraphs that capture attention immediately)
-2. 4–6 H2 sections covering the topic in depth
-3. Practical tips section
-4. Oatmeal CTA paragraph (before conclusion) — see format below
-5. Conclusion (3–5 sentences)
-
 INTERNAL LINKS (use natural anchor text, link to these pages where relevant):
 - Food database: ${SITE_URL}/calories
 - Calorie burn calculator: ${SITE_URL}/burn
@@ -165,52 +158,137 @@ INTERNAL LINKS (use natural anchor text, link to these pages where relevant):
 - BMI calculator: ${SITE_URL}/calculators/bmi
 - Meal plans: ${SITE_URL}/meal-plans
 
-OATMEAL CTA FORMAT (always include before conclusion, personalise to the article topic):
-"If you want to take control of your [relevant goal, e.g. "calorie intake", "macros", "weight"], **[Oatmeal – Calorie Tracker](${APP_URL})** makes it effortless. Track every meal, log your workouts, and see your daily macros in real time — all from your phone. **[Download Oatmeal free](${APP_URL})** and start reaching your goals today."
-
 SEO REQUIREMENTS:
 - Target keyword must appear in the title, first H2, and first 100 words of the article
 - Use LSI keywords naturally throughout
-- Target article length: 1200–1600 words.
+- Target article length: 1200–1600 words.`;
 
-IMPORTANT:
-- Keep output concise enough to fit within response limits.
-- Prefer depth and clarity over excessive length.
-- Avoid repetition.
+const METADATA_PROMPT = `${SYSTEM_PROMPT}
 
-OUTPUT FORMAT (return ONLY valid JSON — no markdown fences, no extra text):
+Return ONLY valid JSON for the blog metadata. Do not include the article body, markdown fences, or extra text.
+
+OUTPUT FORMAT:
 {
   "title": "Article title (target keyword near the start)",
   "slug": "url-friendly-slug-without-numbers",
-  "excerpt": "150–160 character summary for meta description",
-  "meta_title": "SEO title ≤ 60 chars",
-  "meta_description": "SEO description 150–160 chars",
+  "excerpt": "150-160 character summary for meta description",
+  "meta_title": "SEO title <= 60 chars",
+  "meta_description": "SEO description 150-160 chars",
   "meta_keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
   "tags": ["tag1", "tag2", "tag3"],
-  "category": "one of: nutrition | fitness | weight-loss | meal-planning | health | recipes",
-  "reading_time_minutes": 7,
-  "content_md": "Full markdown article content (1000–1200 words)"
-  
+  "category": "one of: nutrition | fitness | weight-loss | meal-planning | health | recipes"
 }`;
 
-interface AIBlogOutput {
+const CONTENT_PROMPT = `${SYSTEM_PROMPT}
+
+STRUCTURE:
+1. Hook introduction (1-2 paragraphs that capture attention immediately)
+2. 4-6 H2 sections covering the topic in depth
+3. Practical tips section
+4. Oatmeal CTA paragraph (before conclusion) - see format below
+5. Conclusion (3-5 sentences)
+
+OATMEAL CTA FORMAT (always include before conclusion, personalise to the article topic):
+"If you want to take control of your [relevant goal, e.g. "calorie intake", "macros", "weight"], **[Oatmeal - Calorie Tracker](${APP_URL})** makes it effortless. Track every meal, log your workouts, and see your daily macros in real time - all from your phone. **[Download Oatmeal free](${APP_URL})** and start reaching your goals today."
+
+Return ONLY the markdown article body. Do not wrap it in JSON or markdown fences. Do not include a top-level H1 because the page already renders the title.`;
+
+interface AIBlogMetadata {
   title: string;
   slug: string;
   excerpt: string;
-  content_md: string;
   meta_title: string;
   meta_description: string;
   meta_keywords: string[];
   tags: string[];
   category: string;
+}
+
+interface AIBlogOutput extends AIBlogMetadata {
+  content_md: string;
   reading_time_minutes: number;
+}
+
+async function callFalLLM(
+  systemPrompt: string,
+  prompt: string,
+  maxTokens: number,
+) {
+  const stream = await fal.stream("openrouter/router", {
+    input: {
+      model: "google/gemini-2.5-flash",
+      //   model: "anthropic/claude-sonnet-4.6",
+      system_prompt: systemPrompt,
+      prompt,
+      temperature: 0.7,
+      max_tokens: maxTokens,
+    },
+  });
+  console.info("[AI Called]");
+
+  //   for await (const event of stream) {
+  //     console.log(event);
+  //   }
+
+  const result = await stream.done();
+  return ((result as { output?: string }).output ?? "").trim();
+}
+
+function stripJsonFence(raw: string) {
+  return raw
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```\s*$/i, "")
+    .trim();
+}
+
+function estimateReadingTimeMinutes(markdown: string) {
+  const wordCount = markdown.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(1, Math.ceil(wordCount / 220));
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function normalizeMetadata(
+  metadata: Partial<AIBlogMetadata>,
+  fallbackTopic: string,
+): AIBlogMetadata {
+  const title = metadata.title?.trim() || fallbackTopic;
+  const excerpt = metadata.excerpt?.trim() || title;
+  const metaTitle = metadata.meta_title?.trim() || title.slice(0, 60);
+  const metaDescription = metadata.meta_description?.trim() || excerpt;
+  const parsedTags = Array.isArray(metadata.tags)
+    ? metadata.tags.filter((tag) => typeof tag === "string")
+    : [];
+  const tags = parsedTags.length > 0 ? parsedTags : ["health"];
+  const parsedMetaKeywords = Array.isArray(metadata.meta_keywords)
+    ? metadata.meta_keywords.filter((keyword) => typeof keyword === "string")
+    : [];
+  const metaKeywords =
+    parsedMetaKeywords.length > 0 ? parsedMetaKeywords : tags;
+
+  return {
+    title,
+    slug: metadata.slug?.trim() || slugify(title),
+    excerpt,
+    meta_title: metaTitle,
+    meta_description: metaDescription,
+    meta_keywords: metaKeywords,
+    tags,
+    category: metadata.category?.trim() || "health",
+  };
 }
 
 async function generateBlogContent(
   topic: string,
   newsArticle?: NewsArticle,
 ): Promise<AIBlogOutput> {
-  const userPrompt = newsArticle
+  const topicPrompt = newsArticle
     ? `Write a detailed health and fitness blog post inspired by this news:
      "${newsArticle.title}"\n\n
      News URL (cite as source if relevant): ${newsArticle.url}\n\n
@@ -221,41 +299,42 @@ async function generateBlogContent(
   // Configure fal with the API key
   fal.config({ credentials: process.env.FAL_KEY });
 
-  const stream = await fal.stream("openrouter/router", {
-    input: {
-      model: "google/gemini-2.5-flash",
-      //   model: "anthropic/claude-sonnet-4.6",
-      system_prompt: SYSTEM_PROMPT,
-      prompt: userPrompt,
-      temperature: 0.7,
-      max_tokens: 4096,
-    },
-  });
-  for await (const event of stream) {
-    console.log(event);
+  const metadataRaw = await callFalLLM(METADATA_PROMPT, topicPrompt, 1200);
+  const jsonStr = stripJsonFence(metadataRaw);
+
+  let metadata: AIBlogMetadata;
+  try {
+    metadata = normalizeMetadata(JSON.parse(jsonStr), topic);
+  } catch {
+    throw new Error(
+      `[blog-gen] Failed to parse AI metadata JSON output. Raw: ${metadataRaw.slice(0, 500)}`,
+    );
   }
-  const result = await stream.done();
 
-  // fal returns { output: "..." }
-  const raw = (result as { output?: string }).output ?? "";
+  const contentRaw = await callFalLLM(
+    CONTENT_PROMPT,
+    `${topicPrompt}
 
-  // Strip markdown code fences if present
-  const jsonStr = raw
-    .replace(/^```json\s*/i, "")
+Use this approved metadata:
+Title: ${metadata.title}
+Slug: ${metadata.slug}
+Excerpt: ${metadata.excerpt}
+Primary keyword: ${metadata.meta_keywords?.[0] ?? metadata.title}
+Category: ${metadata.category}
+Tags: ${metadata.tags.join(", ")}`,
+    4096,
+  );
+  const content_md = contentRaw
+    .replace(/^```markdown\s*/i, "")
     .replace(/^```\s*/i, "")
     .replace(/```\s*$/i, "")
     .trim();
 
-  let parsed: AIBlogOutput;
-  try {
-    parsed = JSON.parse(jsonStr);
-  } catch {
-    throw new Error(
-      `[blog-gen] Failed to parse AI JSON output. Raw: ${raw.slice(0, 500)}`,
-    );
-  }
-
-  return parsed;
+  return {
+    ...metadata,
+    content_md,
+    reading_time_minutes: estimateReadingTimeMinutes(content_md),
+  };
 }
 
 // ── Main Pipeline ─────────────────────────────────────────────────────────
@@ -271,7 +350,6 @@ export async function runBlogPipeline(count = 10): Promise<PipelineResult> {
 
   // Fetch today's news (may be empty if key missing)
   const newsArticles = await fetchHealthNews();
-  console.log("[News Articles]", newsArticles);
 
   // Split: half from news, half from evergreen (or all evergreen if no news)
   const newsCount = Math.min(Math.floor(count / 2), newsArticles.length);
