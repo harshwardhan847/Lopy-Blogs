@@ -5,14 +5,17 @@ import {
 } from "@/lib/blog-generator";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 3600; // Large AI batches can take a long time.
+export const maxDuration = 300; // Large AI batches can take a long time.
 
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
     const requestedCount = Number(body.count ?? 5);
     const count = Number.isFinite(requestedCount)
-      ? Math.min(Math.max(1, Math.floor(requestedCount)), MAX_BLOG_GENERATION_COUNT)
+      ? Math.min(
+          Math.max(1, Math.floor(requestedCount)),
+          MAX_BLOG_GENERATION_COUNT,
+        )
       : 5;
 
     const result = await runBlogPipeline(count);
