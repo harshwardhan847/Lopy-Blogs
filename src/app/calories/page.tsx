@@ -9,7 +9,15 @@ export const metadata: Metadata = {
   title: "Calorie Database – Nutrition Facts for 1,000+ Foods",
   description:
     "Browse calories, protein, carbs, and fat for 1,000+ Indian and global foods. Free nutrition database by Oatmeal calorie tracker.",
-  openGraph: { title: "Calorie Database | Oatmeal", url: "/calories" },
+  alternates: { canonical: "/calories" },
+  openGraph: {
+    title: "Calorie Database | Oatmeal",
+    description:
+      "Browse calories, protein, carbs, and fat for Indian and global foods.",
+    url: "/calories",
+    siteName: "Oatmeal – Calorie Tracker",
+    type: "website",
+  },
 };
 
 export default async function CaloriesHubPage() {

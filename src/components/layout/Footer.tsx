@@ -29,10 +29,10 @@ const FOOTER_LINKS = {
     },
   ],
   Calculators: [
-    { href: "/calculators/tdee", label: "TDEE Calculator" },
-    { href: "/calculators/bmr", label: "BMR Calculator" },
-    { href: "/calculators/macros", label: "Macro Calculator" },
-    { href: "/calculators/bmi", label: "BMI Calculator" },
+    { href: "/calculators/tdee-calculator", label: "TDEE Calculator" },
+    { href: "/calculators/bmr-calculator", label: "BMR Calculator" },
+    { href: "/calculators/macro-calculator", label: "Macro Calculator" },
+    { href: "/calculators/bmi-calculator", label: "BMI Calculator" },
   ],
 };
 

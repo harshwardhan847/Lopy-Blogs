@@ -1,31 +1,61 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getAllPublishedBlogs } from "@/lib/blogs";
 import { BlogCard } from "@/components/blog/BlogCard";
 import BreadcrumbSchema from "@/components/shared/BreadcrumbSchema";
 import BannerAd from "@/components/ads/BannerAd";
 
-export const metadata: Metadata = {
-  title: "Health & Fitness Blog – Tips, Guides & Nutrition Advice | Oatmeal",
-  description:
-    "Expert health and fitness articles on nutrition, calorie tracking, meal planning, weight loss, and more. Powered by Oatmeal calorie tracker.",
-  openGraph: {
-    title: "Health & Fitness Blog | Oatmeal",
-    url: "/blog",
-    type: "website",
-  },
-};
+interface BlogListingPageProps {
+  searchParams: Promise<{ page?: string | string[] }>;
+}
 
-export default async function BlogListingPage() {
-  const blogs = await getAllPublishedBlogs();
+const PAGE_SIZE = 12;
 
-  // Group by category for sections
-  const byCategory: Record<string, typeof blogs> = {};
-  for (const blog of blogs) {
-    if (!byCategory[blog.category]) byCategory[blog.category] = [];
-    byCategory[blog.category].push(blog);
+function parsePage(value: string | string[] | undefined) {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const page = Number(raw ?? 1);
+  return Number.isFinite(page) ? Math.max(1, Math.floor(page)) : 1;
+}
+
+export async function generateMetadata({
+  searchParams,
+}: BlogListingPageProps): Promise<Metadata> {
+  const page = parsePage((await searchParams).page);
+  const pageSuffix = page > 1 ? ` – Page ${page}` : "";
+  const canonical = page > 1 ? `/blog?page=${page}` : "/blog";
+  const title = `Health & Fitness Blog${pageSuffix} – Tips, Guides & Nutrition Advice | Oatmeal`;
+  const description =
+    "Expert health and fitness articles on nutrition, calorie tracking, meal planning, weight loss, and more. Powered by Oatmeal calorie tracker.";
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title: `Health & Fitness Blog${pageSuffix} | Oatmeal`,
+      description:
+        "Health and fitness articles on nutrition, calorie tracking, meal planning, and weight loss.",
+      url: canonical,
+      type: "website",
+    },
+  };
+}
+
+export default async function BlogListingPage({
+  searchParams,
+}: BlogListingPageProps) {
+  const requestedPage = parsePage((await searchParams).page);
+  const { blogs, page, total, totalPages } = await getAllPublishedBlogs({
+    page: requestedPage,
+    pageSize: PAGE_SIZE,
+  });
+  if (total > 0 && requestedPage > totalPages) {
+    redirect(totalPages === 1 ? "/blog" : `/blog?page=${totalPages}`);
   }
 
-  const categories = Object.keys(byCategory);
+  const hasPreviousPage = page > 1;
+  const hasNextPage = page < totalPages;
 
   return (
     <>
@@ -56,27 +86,47 @@ export default async function BlogListingPage() {
           <p className="text-center text-muted-foreground py-20">
             No articles published yet — check back soon!
           </p>
-        ) : categories.length > 0 ? (
-          <div className="space-y-14 mt-8">
-            {categories.map((cat) => (
-              <section key={cat} id={cat}>
-                <h2 className="text-xl font-bold mb-5 capitalize tracking-tight">
-                  {cat.replace(/-/g, " ")}
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {byCategory[cat].map((blog) => (
-                    <BlogCard key={blog.slug} blog={blog} />
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-            {blogs.map((blog) => (
-              <BlogCard key={blog.slug} blog={blog} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+              {blogs.map((blog) => (
+                <BlogCard key={blog.slug} blog={blog} />
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <nav
+                aria-label="Blog pagination"
+                className="mt-10 flex items-center justify-between gap-4 text-sm"
+              >
+                {hasPreviousPage ? (
+                  <Link
+                    href={page - 1 === 1 ? "/blog" : `/blog?page=${page - 1}`}
+                    className="font-medium text-orange-600 hover:underline"
+                  >
+                    Previous
+                  </Link>
+                ) : (
+                  <span className="text-muted-foreground">Previous</span>
+                )}
+
+                <span className="text-muted-foreground">
+                  Page {page} of {totalPages} · {total} articles
+                </span>
+
+                {hasNextPage ? (
+                  <Link
+                    href={`/blog?page=${page + 1}`}
+                    className="font-medium text-orange-600 hover:underline"
+                  >
+                    Next
+                  </Link>
+                ) : (
+                  <span className="text-muted-foreground">Next</span>
+                )}
+              </nav>
+            )}
+          </>
         )}
       </div>
     </>

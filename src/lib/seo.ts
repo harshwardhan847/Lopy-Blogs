@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import type { Food, Activity, MealPlan, Blog } from "@/types";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://blogs.lopy.in";
+const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://blogs.lopy.in"
+).replace(/\/$/, "");
 const SITE_NAME = "Oatmeal – Calorie Tracker";
 
 export function buildFoodMetadata(food: Food): Metadata {
@@ -60,17 +62,17 @@ export function buildMealPlanMetadata(plan: MealPlan): Metadata {
 
 export function buildCalculatorMetadata(slug: string): Metadata {
   const map: Record<string, { title: string; description: string }> = {
-    tdee: {
+    "tdee-calculator": {
       title: "TDEE Calculator – Total Daily Energy Expenditure | Oatmeal",
       description:
         "Calculate your Total Daily Energy Expenditure (TDEE) based on your weight, height, age, and activity level.",
     },
-    bmr: {
+    "bmr-calculator": {
       title: "BMR Calculator – Basal Metabolic Rate | Oatmeal",
       description:
         "Find your Basal Metabolic Rate (BMR) using the Mifflin-St Jeor formula. Know your baseline calorie needs.",
     },
-    macros: {
+    "macro-calculator": {
       title: "Macro Calculator – Protein, Carbs & Fat | Oatmeal",
       description:
         "Calculate your daily macro targets for weight loss, muscle gain, or maintenance.",
@@ -85,7 +87,7 @@ export function buildCalculatorMetadata(slug: string): Metadata {
       description:
         "Calculate your ideal body weight based on height and gender using the Devine formula.",
     },
-    bmi: {
+    "bmi-calculator": {
       title: "BMI Calculator – Body Mass Index | Oatmeal",
       description:
         "Calculate your Body Mass Index (BMI) and find out if you are underweight, normal, overweight, or obese.",

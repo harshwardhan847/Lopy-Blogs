@@ -27,6 +27,7 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function seedFoods() {
   console.log(`Seeding ${foods.length} foods…`);
   const rows = foods.map((food) => ({
@@ -52,6 +53,7 @@ async function seedFoods() {
   console.log("✓ Foods seeded");
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function seedActivities() {
   console.log(`Seeding ${activities.length} activities…`);
   const { error } = await supabase

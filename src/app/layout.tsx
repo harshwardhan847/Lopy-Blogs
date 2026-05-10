@@ -15,7 +15,10 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "https://blogs.lopy.in",
+    (process.env.NEXT_PUBLIC_SITE_URL ?? "https://blogs.lopy.in").replace(
+      /\/$/,
+      "",
+    ),
   ),
   title: {
     default: "Oatmeal – Free Calorie Tracker & Nutrition App",

@@ -13,6 +13,8 @@ interface PipelineResult {
   blogs: { slug: string; title: string; status: string }[];
 }
 
+const MAX_GENERATION_COUNT = 600;
+
 export default function AdminPage() {
   const [blogs, setBlogs] = useState<Blog[] | null>(null);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
@@ -36,8 +38,26 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    fetchBlogs();
-  }, [fetchBlogs]);
+    let cancelled = false;
+
+    async function loadInitialBlogs() {
+      try {
+        const res = await fetch("/api/admin/blogs");
+        const data = await res.json();
+        if (!cancelled) setBlogs(data);
+      } catch (err) {
+        console.error("Failed to fetch blogs:", err);
+      } finally {
+        if (!cancelled) setLoadingBlogs(false);
+      }
+    }
+
+    loadInitialBlogs();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleGenerate() {
     setGenerating(true);
@@ -98,9 +118,15 @@ export default function AdminPage() {
                 id="count-input"
                 type="number"
                 min={1}
-                max={20}
+                max={MAX_GENERATION_COUNT}
                 value={count}
-                onChange={(e) => setCount(Number(e.target.value))}
+                onChange={(e) => {
+                  const nextCount = Number(e.target.value);
+                  if (!Number.isFinite(nextCount)) return;
+                  setCount(
+                    Math.min(MAX_GENERATION_COUNT, Math.max(1, nextCount)),
+                  );
+                }}
                 className="w-28"
               />
             </div>
@@ -116,7 +142,7 @@ export default function AdminPage() {
           {generating && (
             <p className="text-sm text-muted-foreground animate-pulse">
               Fetching news, generating content with AI, uploading to database…
-              This may take several minutes.
+              Large batches can take a long time.
             </p>
           )}
 

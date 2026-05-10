@@ -12,7 +12,9 @@ interface BreadcrumbSchemaProps {
 
 export default function BreadcrumbSchema({
   crumbs,
-  baseUrl = "https://blogs.lopy.in",
+  baseUrl = (
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://blogs.lopy.in"
+  ).replace(/\/$/, ""),
 }: BreadcrumbSchemaProps) {
   const schema: BreadcrumbList = {
     "@type": "BreadcrumbList",

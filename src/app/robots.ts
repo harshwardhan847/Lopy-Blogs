@@ -1,6 +1,8 @@
 import type { MetadataRoute } from "next";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://blogs.lopy.in";
+const BASE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://blogs.lopy.in"
+).replace(/\/$/, "");
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -8,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/_next/"],
+        disallow: ["/api/", "/admin/"],
       },
     ],
     sitemap: `${BASE_URL}/sitemap.xml`,

@@ -17,9 +17,43 @@ import { upsertBlog } from "@/lib/blogs";
 import type { Blog } from "@/types";
 
 // ── Config ────────────────────────────────────────────────────────────────
+// Change these values directly when tuning the generator.
 
+// Public app link inserted into every generated article CTA.
 const APP_URL = "https://oatmeal.lopy.in";
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://blogs.lopy.in";
+
+// Public blog site URL used for internal links inside generated articles.
+const SITE_URL = "https://blogs.lopy.in";
+
+// Hard cap for one admin generation request. 600 blogs means roughly 1200 AI
+// calls because each blog uses one metadata call and one content call.
+export const MAX_BLOG_GENERATION_COUNT = 600;
+
+// Toggle NewsAPI topics. Set false to generate only evergreen posts.
+const ENABLE_NEWS_TOPICS = true;
+
+// Toggle generated evergreen topics. Set false to generate only news posts,
+// limited by available NewsAPI articles.
+const ENABLE_EVERGREEN_TOPICS = true;
+
+// Exact number of news-based posts to attempt per run. Set null to use
+// NEWS_TOPIC_RATIO instead. Use 0 to force all evergreen while keeping news on.
+const NEWS_TOPIC_COUNT: number | null = null;
+
+// Fallback news split when NEWS_TOPIC_COUNT is unset. 0.5 means "try to make
+// half the requested count news posts, then fill the rest with evergreen".
+const NEWS_TOPIC_RATIO = 0.9;
+
+// Number of articles to request from NewsAPI. NewsAPI caps top-headlines
+// pageSize at 100, so this is capped here too.
+const NEWS_FETCH_PAGE_SIZE = Math.min(
+  100,
+  Math.max(20, Math.floor(NEWS_TOPIC_COUNT ?? 20)),
+);
+
+// Number of blogs generated in parallel. Higher is faster but increases AI,
+// image API, and database pressure.
+const BLOG_GENERATION_CONCURRENCY = 4;
 
 // ── Evergreen topic bank ──────────────────────────────────────────────────
 
@@ -61,12 +95,83 @@ const EVERGREEN_TOPICS = [
   "Superfoods That Are Actually Worth the Hype",
 ];
 
+const EVERGREEN_AUDIENCES = [
+  "Beginners",
+  "Busy Professionals",
+  "Students",
+  "Parents",
+  "Vegetarians",
+  "Office Workers",
+  "Remote Workers",
+  "Shift Workers",
+  "Women Over 40",
+  "Men Over 40",
+  "Runners",
+  "Gym Beginners",
+  "People With Desk Jobs",
+  "Frequent Travelers",
+  "Budget-Conscious Eaters",
+];
+
+const EVERGREEN_GOALS = [
+  "Weight Loss",
+  "Muscle Gain",
+  "Better Digestion",
+  "Higher Energy",
+  "Healthy Meal Prep",
+  "Calorie Control",
+  "Macro Tracking",
+  "Improved Sleep",
+  "Heart Health",
+  "Blood Sugar Balance",
+  "Post-Workout Recovery",
+  "Fat Loss",
+  "Strength Training",
+  "Healthy Snacking",
+  "Portion Control",
+];
+
+const EVERGREEN_FORMATS = [
+  "Complete Guide to",
+  "Beginner's Guide to",
+  "Practical Guide to",
+  "Science-Backed Tips for",
+  "Common Mistakes in",
+  "Simple Habits for",
+  "Best Foods for",
+  "Weekly Plan for",
+  "How to Start",
+  "How to Improve",
+  "What to Eat for",
+  "How to Build a Routine for",
+];
+
+const EVERGREEN_CONTEXTS = [
+  "at Home",
+  "on a Budget",
+  "Without Giving Up Favorite Foods",
+  "During a Busy Week",
+  "With Indian Meals",
+  "With High-Protein Foods",
+  "Without Extreme Dieting",
+  "While Eating Out",
+  "After a Long Break",
+  "With Simple Grocery Staples",
+  "Using Calorie Tracking",
+  "Without Spending Hours Cooking",
+];
+
 // ── News API ──────────────────────────────────────────────────────────────
 
 interface NewsArticle {
   title: string;
   url: string;
   description: string | null;
+}
+
+interface BlogGenerationTask {
+  topic: string;
+  news?: NewsArticle;
 }
 
 async function fetchHealthNews(): Promise<NewsArticle[]> {
@@ -79,7 +184,7 @@ async function fetchHealthNews(): Promise<NewsArticle[]> {
   const url = new URL("https://newsapi.org/v2/top-headlines");
   url.searchParams.set("country", "us");
   url.searchParams.set("category", "health");
-  url.searchParams.set("pageSize", "20");
+  url.searchParams.set("pageSize", String(NEWS_FETCH_PAGE_SIZE));
   url.searchParams.set("apiKey", apiKey);
 
   const res = await fetch(url.toString(), { next: { revalidate: 0 } });
@@ -91,7 +196,7 @@ async function fetchHealthNews(): Promise<NewsArticle[]> {
   const json = await res.json();
   return (json.articles ?? [])
     .filter((a: NewsArticle) => a.title && a.url)
-    .slice(0, 20);
+    .slice(0, NEWS_FETCH_PAGE_SIZE);
 }
 
 // ── Unsplash ──────────────────────────────────────────────────────────────
@@ -154,8 +259,8 @@ WRITING STYLE:
 INTERNAL LINKS (use natural anchor text, link to these pages where relevant):
 - Food database: ${SITE_URL}/calories
 - Calorie burn calculator: ${SITE_URL}/burn
-- TDEE calculator: ${SITE_URL}/calculators/tdee
-- BMI calculator: ${SITE_URL}/calculators/bmi
+- TDEE calculator: ${SITE_URL}/calculators/tdee-calculator
+- BMI calculator: ${SITE_URL}/calculators/bmi-calculator
 - Meal plans: ${SITE_URL}/meal-plans
 
 SEO REQUIREMENTS:
@@ -166,6 +271,7 @@ SEO REQUIREMENTS:
 const METADATA_PROMPT = `${SYSTEM_PROMPT}
 
 Return ONLY valid JSON for the blog metadata. Do not include the article body, markdown fences, or extra text.
+Keep the title and slug specific to the requested topic so large batches do not collapse into duplicate generic posts.
 
 OUTPUT FORMAT:
 {
@@ -284,6 +390,87 @@ function normalizeMetadata(
   };
 }
 
+function shuffle<T>(items: T[]) {
+  return [...items].sort(() => Math.random() - 0.5);
+}
+
+function buildEvergreenTopics(count: number) {
+  const topics = new Set(EVERGREEN_TOPICS);
+
+  for (const format of EVERGREEN_FORMATS) {
+    for (const goal of EVERGREEN_GOALS) {
+      for (const audience of EVERGREEN_AUDIENCES) {
+        for (const context of EVERGREEN_CONTEXTS) {
+          topics.add(`${format} ${goal} for ${audience} ${context}`);
+          if (topics.size >= count) return shuffle([...topics]).slice(0, count);
+        }
+      }
+    }
+  }
+
+  return shuffle([...topics]).slice(0, count);
+}
+
+function normalizeRequestedCount(count: number) {
+  const parsedCount = Number.isFinite(count) ? Math.floor(count) : 10;
+  return Math.min(Math.max(1, parsedCount), MAX_BLOG_GENERATION_COUNT);
+}
+
+async function buildGenerationTasks(
+  count: number,
+): Promise<BlogGenerationTask[]> {
+  const requestedCount = normalizeRequestedCount(count);
+  const newsArticles = ENABLE_NEWS_TOPICS ? await fetchHealthNews() : [];
+  const configuredNewsCount =
+    NEWS_TOPIC_COUNT === null
+      ? null
+      : Math.min(Math.floor(NEWS_TOPIC_COUNT), requestedCount);
+  const targetNewsCount =
+    configuredNewsCount ??
+    (ENABLE_EVERGREEN_TOPICS
+      ? Math.floor(requestedCount * NEWS_TOPIC_RATIO)
+      : requestedCount);
+  const newsCount = Math.min(targetNewsCount, newsArticles.length);
+  const evergreenCount = ENABLE_EVERGREEN_TOPICS
+    ? requestedCount - newsCount
+    : 0;
+
+  const tasks: BlogGenerationTask[] = [
+    ...newsArticles.slice(0, newsCount).map((news) => ({
+      topic: news.title,
+      news,
+    })),
+    ...buildEvergreenTopics(evergreenCount).map((topic) => ({ topic })),
+  ];
+
+  if (tasks.length === 0) {
+    throw new Error(
+      "[blog-gen] No topics available. Enable news or evergreen topics.",
+    );
+  }
+
+  return shuffle(tasks).slice(0, requestedCount);
+}
+
+async function mapWithConcurrency<T>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T, index: number) => Promise<void>,
+) {
+  let nextIndex = 0;
+  const workerCount = Math.min(concurrency, items.length);
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (nextIndex < items.length) {
+        const currentIndex = nextIndex;
+        nextIndex++;
+        await worker(items[currentIndex], currentIndex);
+      }
+    }),
+  );
+}
+
 async function generateBlogContent(
   topic: string,
   newsArticle?: NewsArticle,
@@ -347,26 +534,10 @@ export interface PipelineResult {
 
 export async function runBlogPipeline(count = 10): Promise<PipelineResult> {
   const result: PipelineResult = { generated: 0, errors: [], blogs: [] };
+  const requestedCount = normalizeRequestedCount(count);
+  const tasks = await buildGenerationTasks(requestedCount);
 
-  // Fetch today's news (may be empty if key missing)
-  const newsArticles = await fetchHealthNews();
-
-  // Split: half from news, half from evergreen (or all evergreen if no news)
-  const newsCount = Math.min(Math.floor(count / 2), newsArticles.length);
-  const evergreenCount = count - newsCount;
-
-  // Shuffle evergreen topics
-  const shuffled = [...EVERGREEN_TOPICS].sort(() => Math.random() - 0.5);
-
-  const tasks: Array<{ topic: string; news?: NewsArticle }> = [
-    ...newsArticles.slice(0, newsCount).map((news) => ({
-      topic: news.title,
-      news,
-    })),
-    ...shuffled.slice(0, evergreenCount).map((topic) => ({ topic })),
-  ];
-
-  for (const task of tasks) {
+  await mapWithConcurrency(tasks, BLOG_GENERATION_CONCURRENCY, async (task) => {
     try {
       // Generate content via AI
       const aiOutput = await generateBlogContent(task.topic, task.news);
@@ -418,7 +589,7 @@ export async function runBlogPipeline(count = 10): Promise<PipelineResult> {
       console.error(`[blog-gen] Error for "${task.topic}":`, msg);
       result.errors.push({ topic: task.topic, error: msg });
     }
-  }
+  });
 
   return result;
 }

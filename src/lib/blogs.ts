@@ -27,16 +27,46 @@ function getAnonClient() {
 
 // ── Public reads ──────────────────────────────────────────────────────────
 
-export async function getAllPublishedBlogs(): Promise<Blog[]> {
+export interface PublishedBlogsPage {
+  blogs: Blog[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+interface PublishedBlogsOptions {
+  page?: number;
+  pageSize?: number;
+}
+
+export async function getAllPublishedBlogs({
+  page = 1,
+  pageSize = 12,
+}: PublishedBlogsOptions = {}): Promise<PublishedBlogsPage> {
+  const safePage = Math.max(1, Math.floor(page));
+  const safePageSize = Math.min(1000, Math.max(1, Math.floor(pageSize)));
+  const from = (safePage - 1) * safePageSize;
+  const to = from + safePageSize - 1;
+
   const client = getAnonClient();
-  const { data, error } = await client
+  const { data, error, count } = await client
     .from("blogs")
-    .select("*")
+    .select("*", { count: "exact" })
     .eq("status", "published")
-    .order("published_at", { ascending: false });
+    .order("published_at", { ascending: false })
+    .range(from, to);
 
   if (error) throw error;
-  return (data ?? []) as Blog[];
+  const total = count ?? 0;
+
+  return {
+    blogs: (data ?? []) as Blog[],
+    page: safePage,
+    pageSize: safePageSize,
+    total,
+    totalPages: Math.max(1, Math.ceil(total / safePageSize)),
+  };
 }
 
 export async function getBlogBySlug(slug: string): Promise<Blog | null> {

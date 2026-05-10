@@ -35,8 +35,7 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { "calculator-slug": slug } = await params;
-  const key = slug.replace("-calculator", "");
-  return buildCalculatorMetadata(key);
+  return buildCalculatorMetadata(slug);
 }
 
 interface CalcConfig {

@@ -34,10 +34,10 @@ export default function PrivacyPolicyPage() {
             1. Introduction
           </h2>
           <p style={{ color: "var(--color-muted)" }}>
-            Oatmeal ("we", "us", "our") operates the website oatmealapp.com and
-            the Oatmeal calorie tracker app. This Privacy Policy explains what
-            information we collect, how we use it, and your rights regarding
-            that information.
+            Oatmeal (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) operates the
+            website oatmealapp.com and the Oatmeal calorie tracker app. This
+            Privacy Policy explains what information we collect, how we use it,
+            and your rights regarding that information.
           </p>
         </section>
 
@@ -168,7 +168,7 @@ export default function PrivacyPolicyPage() {
             className="text-lg font-semibold mb-2"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            7. Children's Privacy
+            7. Children&apos;s Privacy
           </h2>
           <p style={{ color: "var(--color-muted)" }}>
             This website is not directed at children under 13. We do not

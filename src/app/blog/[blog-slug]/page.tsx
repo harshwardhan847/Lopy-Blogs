@@ -15,13 +15,16 @@ import { TableOfContents } from "@/components/blog/TableOfContents";
 import { Badge } from "@/components/ui/badge";
 
 export const revalidate = 3600; // ISR: revalidate every hour
+const STATIC_PARAMS_PAGE_SIZE = 1000;
 
 interface PageProps {
   params: Promise<{ "blog-slug": string }>;
 }
 
 export async function generateStaticParams() {
-  const blogs = await getAllPublishedBlogs();
+  const { blogs } = await getAllPublishedBlogs({
+    pageSize: STATIC_PARAMS_PAGE_SIZE,
+  });
   return blogs.map((blog) => ({ "blog-slug": blog.slug }));
 }
 
@@ -93,7 +96,7 @@ export default async function BlogDetailPage({ params }: PageProps) {
             src={blog.cover_image_url}
             alt={blog.cover_image_alt || blog.title}
             fill
-            priority
+            preload
             className="object-cover"
             sizes="100vw"
           />

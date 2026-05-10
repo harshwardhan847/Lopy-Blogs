@@ -13,10 +13,6 @@ interface NutritionTableProps {
   servingGrams?: number;
 }
 
-function scale(value: number, grams: number) {
-  return Math.round((value * grams) / 100);
-}
-
 export default function NutritionTable({
   food,
   servingGrams = 100,

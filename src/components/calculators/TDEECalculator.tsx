@@ -108,7 +108,12 @@ export default function TDEECalculator() {
         </div>
         <div className="mb-5">
           <Label className="mb-1 block">Activity Level</Label>
-          <Select value={activity} onValueChange={setActivity}>
+          <Select
+            value={activity}
+            onValueChange={(value) => {
+              if (value) setActivity(value);
+            }}
+          >
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>

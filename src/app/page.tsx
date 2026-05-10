@@ -1,11 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getAllFoods } from "@/lib/foods";
 import { getAllMealPlans } from "@/lib/meal-plans";
+import { getAllPublishedBlogs } from "@/lib/blogs";
 import InContentAd from "@/components/ads/InContentAd";
 import BannerAd from "@/components/ads/BannerAd";
+import { BlogCard } from "@/components/blog/BlogCard";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 const PILLARS = [
   {
@@ -43,9 +50,14 @@ const PILLARS = [
 ];
 
 export default async function HomePage() {
-  const [foods, plans] = await Promise.all([getAllFoods(), getAllMealPlans()]);
+  const [foods, plans, publishedBlogs] = await Promise.all([
+    getAllFoods(),
+    getAllMealPlans(),
+    getAllPublishedBlogs({ pageSize: 3 }),
+  ]);
   const featuredFoods = foods.slice(0, 8);
   const featuredPlans = plans.slice(0, 3);
+  const featuredBlogs = publishedBlogs.blogs;
 
   return (
     <>
@@ -71,7 +83,7 @@ export default async function HomePage() {
               Download Free on App Store
             </a>
             <Link
-              href="/calculators/tdee"
+              href="/calculators/tdee-calculator"
               className={buttonVariants({ variant: "outline", size: "lg" })}
             >
               Try TDEE Calculator →
@@ -194,6 +206,30 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* Latest Blog Articles */}
+      {featuredBlogs.length > 0 && (
+        <section className="py-12 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold text-foreground tracking-tight">
+                Latest Articles
+              </h2>
+              <Link
+                href="/blog"
+                className="text-sm font-semibold text-primary hover:underline"
+              >
+                View all →
+              </Link>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredBlogs.map((blog) => (
+                <BlogCard key={blog.slug} blog={blog} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* App Download CTA */}
       <section className="py-16 px-4 text-center bg-foreground text-background">
